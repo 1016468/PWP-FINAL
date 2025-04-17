@@ -70,25 +70,3 @@ def getLaneCurve(img, display=2):
 
 
    return curve
-
-
-
-
-if __name__ == '__main__':
-   cap = cv2.VideoCapture('/Users/tookd.photo/Desktop/fweh.mp4')
-   intialTrackBarVals = [102, 80, 20, 214]
-   utlis.initializeTrackbars(intialTrackBarVals)
-   frameCounter = 0
-   while True:
-       frameCounter += 1
-       if cap.get(cv2.CAP_PROP_FRAME_COUNT) == frameCounter:
-           cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-           frameCounter = 0
-
-
-       success, img = cap.read()
-       img = cv2.resize(img, (480, 240))
-       curve = getLaneCurve(img, display=2)
-       print(curve)
-       # cv2.imshow('Vid',img)
-       cv2.waitKey(1)
