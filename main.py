@@ -1,35 +1,34 @@
 from MotorModule import Motor
 from LaneModule import getLaneCurve
 import WebcamModule
+import utlis
+import cv2
 
-# Initialize the motor (no need for GPIO pins now)
+# Initialize motor and trackbars
 motor = Motor()
+utlis.initializeTrackbars([102, 80, 20, 214])
 
 def main():
     img = WebcamModule.getImg()
-    curveVal = getLaneCurve(img, 1)
+    curveVal = getLaneCurve(img, display=1)
 
-    # Tweakable driving sensitivity + speed limit
-    sen = 1.3
-    maxVal = 0.3
+    # Driving sensitivity & limits
+    sensitivity = 1.3
+    maxTurn = 0.3
 
-    # Clamp curveVal within range
-    if curveVal > maxVal:
-        curveVal = maxVal
-    if curveVal < -maxVal:
-        curveVal = -maxVal
+    # Clamp curveVal
+    curveVal = max(min(curveVal, maxTurn), -maxTurn)
 
-    # Chill the steering near the center
+    # Fine-tuning around the center
     if curveVal > 0:
-        sen = 1.7
+        sensitivity = 1.7
         if curveVal < 0.05:
             curveVal = 0
-    else:
-        if curveVal > -0.08:
-            curveVal = 0
+    elif curveVal > -0.08:
+        curveVal = 0
 
-    # Move with speed and turn control
-    motor.move(0.20, -curveVal * sen, 0.05)
+    # Send command to motor
+    motor.move(0.20, -curveVal * sensitivity, 0.05)
 
 if __name__ == '__main__':
     while True:
