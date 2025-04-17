@@ -39,7 +39,3 @@ def main():
 
     motor.move(0, -0.5, 2)  # Turn left
     motor.stop(2)
-
-if __name__ == '__main__':
-    motor = Motor()
-    main()
