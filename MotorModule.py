@@ -14,16 +14,16 @@ class Motor:
         rightSpeed = speed + turn
 
         # Clamp the values between -1.0 and 1.0
-        leftSpeed = max(min(leftSpeed, 1.0), -1.0)
-        rightSpeed = max(min(rightSpeed, 1.0), -1.0)
+        leftSpeed = max(min(leftSpeed, 0.8), -0.8)
+        rightSpeed = max(min(rightSpeed, 0.8), -0.8)
 
         self.kit.motor1.throttle = leftSpeed
-        self.kit.motor3.throttle = rightSpeed
+        self.kit.motor2.throttle = rightSpeed
         sleep(t)
 
     def stop(self, t=0):
         self.kit.motor1.throttle = 0
-        self.kit.motor3.throttle = 0
+        self.kit.motor2.throttle = 0
         self.mySpeed = 0
         sleep(t)
 
