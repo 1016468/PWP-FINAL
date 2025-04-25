@@ -64,9 +64,12 @@ def getLaneCurve(img, display=2):
 
 
    #### NORMALIZATION
-   curve = curve / 100
-   if curve > 1: curve == 1
-   if curve < -1: curve == -1
+       #### NORMALIZATION
+    curve = curve / 100
+    if curve > 1:
+        curve = 1
+    if curve < -1:
+        curve = -1
 
+    return curve
 
-   return curve
