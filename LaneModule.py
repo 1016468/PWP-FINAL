@@ -64,7 +64,6 @@ def getLaneCurve(img, display=2):
 
 
    #### NORMALIZATION
-       #### NORMALIZATION
     curve = curve / 100
     if curve > 1:
         curve = 1
