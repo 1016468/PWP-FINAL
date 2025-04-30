@@ -1,7 +1,7 @@
 
 import cv2
 import numpy as np
-import Utils
+import utils
 
 
 def getLaneCurve(img, display=2):
@@ -10,17 +10,17 @@ def getLaneCurve(img, display=2):
     imgCopy = img.copy()
     imgResult = img.copy()
     #### STEP 1
-    imgThres = Utils.thresholding(img)
+    imgThres = utils.thresholding(img)
 
     #### STEP 2
     hT, wT, c = img.shape
-    points = Utils.valTrackbars()
-    imgWarp = Utils.warpImg(imgThres, points, wT, hT)
-    imgWarpPoints = Utils.drawPoints(imgCopy, points)
+    points = utils.valTrackbars()
+    imgWarp = utils.warpImg(imgThres, points, wT, hT)
+    imgWarpPoints = utils.drawPoints(imgCopy, points)
 
     #### STEP 3
-    middlePoint, imgHist = Utils.getHistogram(imgWarp, display=True, minPer=0.5, region=4)
-    curveAveragePoint, imgHist = Utils.getHistogram(imgWarp, display=True, minPer=0.9)
+    middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5, region=4)
+    curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.9)
     curveRaw = curveAveragePoint - middlePoint
 
     #### SETP 4
@@ -31,7 +31,7 @@ def getLaneCurve(img, display=2):
 
     #### STEP 5
     if display != 0:
-        imgInvWarp = Utils.warpImg(imgWarp, points, wT, hT, inv=True)
+        imgInvWarp = utils.warpImg(imgWarp, points, wT, hT, inv=True)
         imgInvWarp = cv2.cvtColor(imgInvWarp, cv2.COLOR_GRAY2BGR)
         imgInvWarp[0:hT // 3, 0:wT] = 0, 0, 0
         imgLaneColor = np.zeros_like(img)
@@ -46,9 +46,9 @@ def getLaneCurve(img, display=2):
             w = wT // 20
             cv2.line(imgResult, (w * x + int(curve // 50), midY - 10),
                      (w * x + int(curve // 50), midY + 10), (0, 0, 255), 2)
-    if not Utils.HEADLESS:
+    if not utils.HEADLESS:
         if display == 2:
-            imgStacked = Utils.stackImages(0.7, ([img, imgWarpPoints, imgWarp],
+            imgStacked = utils.stackImages(0.7, ([img, imgWarpPoints, imgWarp],
                                                  [imgHist, imgLaneColor, imgResult]))
             cv2.imshow('ImageStack', imgStacked)
         elif display == 1:
