@@ -1,6 +1,7 @@
+import os
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # Fix for Qt platform plugin issue
 import cv2
 import numpy as np
-import os
 HEADLESS = os.environ.get("DISPLAY", "") == ""
 
 
@@ -136,3 +137,11 @@ def stackImages(scale, imgArray):
        hor = np.hstack(imgArray)
        ver = hor
    return ver
+
+if __name__ == '__main__':
+    # Test thresholding with a sample image
+    img = cv2.imread('test.jpg')
+    if img is not None:
+        thresh = thresholding(img)
+        cv2.imshow('Threshold', thresh)
+        cv2.waitKey(0)
