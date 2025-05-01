@@ -40,14 +40,14 @@ class Motor:
 
 if __name__ == '__main__':
     motor = Motor(simulation=True)
-    motor.move(0.5, 0, 2)  # Forward
+    motor.move(0.8, 0, 2)  # Forward
     motor.stop(2)
 
-    motor.move(-0.5, 0, 2)  # Backward
+    motor.move(-0.8, 0, 2)  # Backward
     motor.stop(2)
 
-    motor.move(0, 0.5, 2)  # Turn right
+    motor.move(0, 0.8, 2)  # Turn right
     motor.stop(2)
 
-    motor.move(0, -0.5, 2)  # Turn left
+    motor.move(0, -0.8, 2)  # Turn left
     motor.stop(2)
