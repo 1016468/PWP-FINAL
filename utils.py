@@ -2,7 +2,14 @@ import os
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # Fix for Qt platform plugin issue
 import cv2
 import numpy as np
-HEADLESS = os.environ.get("DISPLAY", "") == ""
+# Check if we're on Raspberry Pi (which will have a display)
+try:
+    with open('/proc/cpuinfo') as f:
+        IS_RASPBERRY_PI = 'Raspberry Pi' in f.read()
+except:
+    IS_RASPBERRY_PI = False
+
+HEADLESS = (os.environ.get("DISPLAY", "") == "") and not IS_RASPBERRY_PI
 
 
 
