@@ -14,7 +14,7 @@ class Motor:
                 self.simulation = True  # Fallback to simulation
         self.mySpeed = 0
 
-    def move(self, speed=0.5, turn=0, t=0):
+    def move(self, speed=0.8, turn=0, t=0):
         speed *= 1.0  # Full range is -1.0 to 1.0 for Adafruit
         turn *= 0.7
 
