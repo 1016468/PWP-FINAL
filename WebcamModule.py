@@ -1,3 +1,4 @@
+
 import cv2
 
 def getImg(display=False, size=[480, 240]):
