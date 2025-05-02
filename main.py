@@ -2,12 +2,12 @@ from MotorModule import Motor
 from LaneModule import getLaneCurve
 from time import sleep
 import WebcamModule
-import utils
+import Utils
 import cv2
 
 # Initialize motor and trackbars (in simulation mode)
 motor = Motor(simulation=False)
-utils.initializeTrackbars([102, 80, 20, 214])
+Utils.initializeTrackbars([102, 80, 20, 214])
 
 def main():
     img = WebcamModule.getImg(display=False)
@@ -32,6 +32,12 @@ def main():
     motor.move(0.15, -curveVal * sensitivity, 0.05)  # Reduced base speed from 0.20 to 0.15
 
 if __name__ == '__main__':
+    # Test motors first
+    print("Testing motors...")
+    motor.move(0.2, 0, 2)  # Move forward slowly for 2 seconds
+    motor.stop(1)
+    print("Motor test complete")
+    
     while True:
         try:
             main()
