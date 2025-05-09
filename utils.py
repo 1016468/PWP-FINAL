@@ -1,50 +1,35 @@
 import os
-os.environ['QT_QPA_PLATFORM'] = 'offscreen'  # Fix for Qt platform plugin issue
 import cv2
 import numpy as np
-# Check if we're on Raspberry Pi (which will have a display)
-try:
-    with open('/proc/cpuinfo') as f:
-        IS_RASPBERRY_PI = 'Raspberry Pi' in f.read()
-except:
-    IS_RASPBERRY_PI = False
 
-HEADLESS = (os.environ.get("DISPLAY", "") == "") and not IS_RASPBERRY_PI
-
-
+# Force headless mode
+HEADLESS = True
 
 def thresholding(img):
+    """Convert image to binary threshold to isolate lane markings"""
     imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # Gray-white range
+    # Gray-white range for detecting light-colored lanes
     lowerGray = np.array([0, 0, 130])     # Hue, Saturation, Value
     upperGray = np.array([180, 60, 255])  # Covers gray to white-ish
     maskWhite = cv2.inRange(imgHsv, lowerGray, upperGray)
     return maskWhite
 
-
-
-
-
 def warpImg(img, points, w, h, inv=False):
-   pts1 = np.float32(points)
-   pts2 = np.float32([[0, 0], [w, 0], [0, h], [w, h]])
-   if inv:
-       matrix = cv2.getPerspectiveTransform(pts2, pts1)
-   else:
-       matrix = cv2.getPerspectiveTransform(pts1, pts2)
-   imgWarp = cv2.warpPerspective(img, matrix, (w, h))
-   return imgWarp
+    """Apply perspective transform to get bird's eye view of lane"""
+    pts1 = np.float32(points)
+    pts2 = np.float32([[0, 0], [w, 0], [0, h], [w, h]])
+    if inv:
+        matrix = cv2.getPerspectiveTransform(pts2, pts1)
+    else:
+        matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    imgWarp = cv2.warpPerspective(img, matrix, (w, h))
+    return imgWarp
 
-
-
-
-def nothing(a):
-   pass
-
-
-
+# Global variable to store trackbar values
+trackbarValues = {}
 
 def initializeTrackbars(initialTracbarVals, wT=480, hT=240):
+    """Initialize fixed values for the warping trapezoid - no GUI elements"""
     global trackbarValues
     trackbarValues = {
         "Width Top": initialTracbarVals[0],
@@ -53,102 +38,86 @@ def initializeTrackbars(initialTracbarVals, wT=480, hT=240):
         "Height Bottom": initialTracbarVals[3]
     }
 
-
-
-
-
-trackbarValues = {}
-
 def valTrackbars(wT=480, hT=240):
+    """Return the four corner points for the perspective transform"""
     global trackbarValues
     if not trackbarValues:
+        # Default values if not initialized
         return np.float32([(60, 60), (wT - 60, 60), (20, 180), (wT - 20, 180)])
+    
     widthTop = trackbarValues["Width Top"]
     heightTop = trackbarValues["Height Top"]
     widthBottom = trackbarValues["Width Bottom"]
     heightBottom = trackbarValues["Height Bottom"]
+    
+    # These points define a trapezoid that will be transformed to a rectangle
     points = np.float32([(widthTop, heightTop), (wT - widthTop, heightTop),
-                         (widthBottom, heightBottom), (wT - widthBottom, heightBottom)])
+                       (widthBottom, heightBottom), (wT - widthBottom, heightBottom)])
     return points
 
-
-
-
-
 def drawPoints(img, points):
-   for x in range(4):
-       cv2.circle(img, (int(points[x][0]), int(points[x][1])), 15, (0, 0, 255), cv2.FILLED)
-   return img
-
-
-
+    """For debugging only: Draw the trapezoid points on the image"""
+    if HEADLESS:
+        return img  # Skip in headless mode
+        
+    for x in range(4):
+        cv2.circle(img, (int(points[x][0]), int(points[x][1])), 15, (0, 0, 255), cv2.FILLED)
+    return img
 
 def getHistogram(img, minPer=0.1, display=False, region=1):
-   if region == 1:
-       histValues = np.sum(img, axis=0)
-   else:
-       histValues = np.sum(img[img.shape[0] // region:, :], axis=0)
+    """Calculate histogram to find the center of the lane"""
+    if region == 1:
+        histValues = np.sum(img, axis=0)
+    else:
+        histValues = np.sum(img[img.shape[0] // region:, :], axis=0)
 
+    maxValue = np.max(histValues)
+    minValue = minPer * maxValue
 
-   # print(histValues)
-   maxValue = np.max(histValues)
-   minValue = minPer * maxValue
+    indexArray = np.where(histValues >= minValue)
+    basePoint = int(np.average(indexArray))
 
+    if display and not HEADLESS:
+        imgHist = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
+        for x, intensity in enumerate(histValues):
+            cv2.line(imgHist, (x, img.shape[0]), (x, img.shape[0] - intensity // 255 // region), (255, 0, 255), 1)
+            cv2.circle(imgHist, (basePoint, img.shape[0]), 20, (0, 255, 255), cv2.FILLED)
+        return basePoint, imgHist
 
-   indexArray = np.where(histValues >= minValue)
-   basePoint = int(np.average(indexArray))
-   # print(basePoint)
-
-
-   if display:
-       imgHist = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
-       for x, intensity in enumerate(histValues):
-           cv2.line(imgHist, (x, img.shape[0]), (x, img.shape[0] - intensity // 255 // region), (255, 0, 255), 1)
-           cv2.circle(imgHist, (basePoint, img.shape[0]), 20, (0, 255, 255), cv2.FILLED)
-       return basePoint, imgHist
-
-
-   return basePoint
-
-
-
+    return basePoint
 
 def stackImages(scale, imgArray):
-   rows = len(imgArray)
-   cols = len(imgArray[0])
-   rowsAvailable = isinstance(imgArray[0], list)
-   width = imgArray[0][0].shape[1]
-   height = imgArray[0][0].shape[0]
-   if rowsAvailable:
-       for x in range(0, rows):
-           for y in range(0, cols):
-               if imgArray[x][y].shape[:2] == imgArray[0][0].shape[:2]:
-                   imgArray[x][y] = cv2.resize(imgArray[x][y], (0, 0), None, scale, scale)
-               else:
-                   imgArray[x][y] = cv2.resize(imgArray[x][y], (imgArray[0][0].shape[1], imgArray[0][0].shape[0]),
+    """Stack images for display - not used in headless mode"""
+    if HEADLESS:
+        return np.zeros((10, 10, 3), np.uint8)  # Return dummy image in headless mode
+        
+    rows = len(imgArray)
+    cols = len(imgArray[0])
+    rowsAvailable = isinstance(imgArray[0], list)
+    width = imgArray[0][0].shape[1]
+    height = imgArray[0][0].shape[0]
+    if rowsAvailable:
+        for x in range(0, rows):
+            for y in range(0, cols):
+                if imgArray[x][y].shape[:2] == imgArray[0][0].shape[:2]:
+                    imgArray[x][y] = cv2.resize(imgArray[x][y], (0, 0), None, scale, scale)
+                else:
+                    imgArray[x][y] = cv2.resize(imgArray[x][y], (imgArray[0][0].shape[1], imgArray[0][0].shape[0]),
                                                None, scale, scale)
-               if len(imgArray[x][y].shape) == 2: imgArray[x][y] = cv2.cvtColor(imgArray[x][y], cv2.COLOR_GRAY2BGR)
-       imageBlank = np.zeros((height, width, 3), np.uint8)
-       hor = [imageBlank] * rows
-       hor_con = [imageBlank] * rows
-       for x in range(0, rows):
-           hor[x] = np.hstack(imgArray[x])
-       ver = np.vstack(hor)
-   else:
-       for x in range(0, rows):
-           if imgArray[x].shape[:2] == imgArray[0].shape[:2]:
-               imgArray[x] = cv2.resize(imgArray[x], (0, 0), None, scale, scale)
-           else:
-               imgArray[x] = cv2.resize(imgArray[x], (imgArray[0].shape[1], imgArray[0].shape[0]), None, scale, scale)
-           if len(imgArray[x].shape) == 2: imgArray[x] = cv2.cvtColor(imgArray[x], cv2.COLOR_GRAY2BGR)
-       hor = np.hstack(imgArray)
-       ver = hor
-   return ver
-
-if __name__ == '__main__':
-    # Test thresholding with a sample image
-    img = cv2.imread('test.jpg')
-    if img is not None:
-        thresh = thresholding(img)
-        cv2.imshow('Threshold', thresh)
-        cv2.waitKey(0)
+                if len(imgArray[x][y].shape) == 2: imgArray[x][y] = cv2.cvtColor(imgArray[x][y], cv2.COLOR_GRAY2BGR)
+        imageBlank = np.zeros((height, width, 3), np.uint8)
+        hor = [imageBlank] * rows
+        hor_con = [imageBlank] * rows
+        for x in range(0, rows):
+            hor[x] = np.hstack(imgArray[x])
+        ver = np.vstack(hor)
+    else:
+        for x in range(0, rows):
+            if imgArray[x].shape[:2] == imgArray[0].shape[:2]:
+                imgArray[x] = cv2.resize(imgArray[x], (0, 0), None, scale, scale)
+            else:
+                imgArray[x] = cv2.resize(imgArray[x], (imgArray[0].shape[1], imgArray[0].shape[0]), None, scale, scale)
+            if len(imgArray[x].shape) == 2: imgArray[x] = cv2.cvtColor(imgArray[x], cv2.COLOR_GRAY2BGR)
+        hor = np.hstack(imgArray)
+        ver = hor
+    return ver
