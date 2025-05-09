@@ -1,7 +1,7 @@
 
 import cv2
 import numpy as np
-import Utils
+import utils
 
 
 def getLaneCurve(img, display=2):
