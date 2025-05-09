@@ -2,7 +2,7 @@ from MotorModule import Motor
 from LaneModule import getLaneCurve
 from time import sleep
 import WebcamModule
-import Utils
+import utils
 import cv2
 
 # Initialize motor and trackbars (in simulation mode)
