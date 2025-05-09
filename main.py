@@ -3,49 +3,90 @@ from LaneModule import getLaneCurve
 from time import sleep
 import WebcamModule
 import utils
-import cv2
+import sys
 
-# Initialize motor and trackbars (in simulation mode)
-motor = Motor(simulation=False)
+# Set up for completely headless operation
+SIMULATION_MODE = False  # Set to False for real hardware
+
+# Initialize motor
+motor = Motor(simulation=SIMULATION_MODE)
+
+# Initialize trackbars with fixed values that work well
+# Format: [Width Top, Height Top, Width Bottom, Height Bottom]
+# These values define the trapezoid for lane detection
 utils.initializeTrackbars([102, 80, 20, 214])
 
 def main():
+    # Get image from webcam
     img = WebcamModule.getImg(display=False)
-    curveVal = getLaneCurve(img, display=0)  # Disable display in simulation mode
-
-    # Driving sensitivity & limits
-    sensitivity = 1.0  # Reduced from 1.3
-    maxTurn = 0.2     # Reduced from 0.3
-
-    # Clamp curveVal
+    
+    # Check if image is valid
+    if img is None:
+        print("Warning: Failed to get camera image")
+        return False
+    
+    # Get curve value from lane detection (disable all displays)
+    curveVal = getLaneCurve(img, display=0)
+    
+    # Configure driving parameters - adjust these for your specific robot
+    sensitivity = 1.0  # How strongly to react to curves
+    maxTurn = 0.2      # Maximum turning value
+    baseSpeed = 0.15   # Forward speed
+    
+    # Clamp curve value to prevent too sharp turns
     curveVal = max(min(curveVal, maxTurn), -maxTurn)
-
-    # Fine-tuning around the center
-    if curveVal > 0:
-        sensitivity = 1.3  # Reduced from 1.7
-        if curveVal < 0.05:
-            curveVal = 0
-    elif curveVal > -0.08:
-        curveVal = 0
-
+    
+    # Fine-tuning around the center to reduce jitter
+    if abs(curveVal) < 0.05:
+        curveVal = 0  # Ignore very small curves (noise)
+    elif curveVal > 0:
+        sensitivity = 1.3  # Slightly higher sensitivity for right turns
+    
+    # Print debug info (can be disabled in production)
+    print(f"Curve: {curveVal:.4f}, Speed: {baseSpeed:.2f}, Turn: {-curveVal * sensitivity:.4f}")
+    
     # Send command to motor
-    motor.move(0.15, -curveVal * sensitivity, 0.05)  # Reduced base speed from 0.20 to 0.15
+    motor.move(baseSpeed, -curveVal * sensitivity, 0.05)
+    return True
 
 if __name__ == '__main__':
-    # Test motors first
+    print("Starting autonomous robot in headless mode...")
+    
+    # Short motor test to verify connectivity
     print("Testing motors...")
-    motor.move(0.2, 0, 2)  # Move forward slowly for 2 seconds
-    motor.stop(1)
+    motor.move(0.15, 0, 1)  # Move forward briefly
+    motor.stop(0.5)
     print("Motor test complete")
     
-    while True:
-        try:
-            main()
-            sleep(0.1)  # Small delay to prevent overwhelming the motor
-        except KeyboardInterrupt:
-            motor.stop()
-            break
-        except Exception as e:
-            print(f"Error: {e}")
-            motor.stop()
-            break
+    # Main control loop
+    failure_count = 0
+    max_failures = 5
+    
+    try:
+        print("Beginning autonomous navigation...")
+        while True:
+            success = main()
+            
+            # Handle camera/detection failures
+            if not success:
+                failure_count += 1
+                print(f"Operation failure {failure_count}/{max_failures}")
+                
+                if failure_count >= max_failures:
+                    print("Too many failures. Stopping...")
+                    motor.stop()
+                    break
+            else:
+                failure_count = 0  # Reset failure counter on success
+                
+            sleep(0.05)  # Small delay between iterations
+            
+    except KeyboardInterrupt:
+        print("Program stopped by user")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        # Always ensure motors are stopped when exiting
+        print("Stopping motors and cleaning up...")
+        motor.stop()
+        sys.exit(0)
