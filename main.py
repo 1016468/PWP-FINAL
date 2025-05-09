@@ -7,7 +7,7 @@ import cv2
 
 # Initialize motor and trackbars (in simulation mode)
 motor = Motor(simulation=False)
-Utils.initializeTrackbars([102, 80, 20, 214])
+utils.initializeTrackbars([102, 80, 20, 214])
 
 def main():
     img = WebcamModule.getImg(display=False)
