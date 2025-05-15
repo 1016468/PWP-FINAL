@@ -30,7 +30,7 @@ class Motor:
         speed *= base_speed
         
         # Increased turn factor for sharper turns
-        turn *= 0.9  # Increased from 0.7
+        turn *= 0.75  # Increased from 0.7
         
         # Calculate left and right motor speeds
         leftSpeed = speed - turn
