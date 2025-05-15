@@ -19,7 +19,7 @@ class Motor:
         self.mySpeed = 0
         
         # Define minimum throttle value for good movement - reduced to allow better control
-        self.MIN_THROTTLE = 0.6  # Reduced from 0.7 - This is 60% of max power
+        self.MIN_THROTTLE = 0.8  # Reduced from 0.7 - This is 60% of max power
         
         # Right motor compensation factor to correct the drift
         self.RIGHT_MOTOR_FACTOR = 0.9  # Increased from 0.85 - Reduce right motor power by 10%
