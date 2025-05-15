@@ -19,10 +19,10 @@ class Motor:
         self.mySpeed = 0
         
         # Define minimum throttle value needed for motors to actually move
-        self.MIN_THROTTLE = 0.75  # Increased to 0.75 - Motors need at least 75% power to move
+        self.MIN_THROTTLE = 0.7  # Increased to 0.75 - Motors need at least 75% power to move
         
         # Right motor compensation factor to correct the drift
-        self.RIGHT_MOTOR_FACTOR = 0.9  # Increased from 0.85 - Reduce right motor power by 10%
+        self.RIGHT_MOTOR_FACTOR = 0.8  # Increased from 0.85 - Reduce right motor power by 10%
     
     def move(self, speed=0.8, turn=0, t=0):
         # Apply base speed scaling
