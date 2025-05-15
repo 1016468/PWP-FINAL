@@ -18,14 +18,14 @@ class Motor:
                 self.simulation = True  # Fallback to simulation
         self.mySpeed = 0
         
-        # Define minimum throttle value for good movement - reduced to allow better control
-        self.MIN_THROTTLE = 0.7  # Reduced from 0.7 - This is 60% of max power
+        # Define minimum throttle value needed for motors to actually move
+        self.MIN_THROTTLE = 0.75  # Increased to 0.75 - Motors need at least 75% power to move
         
         # Right motor compensation factor to correct the drift
-        self.RIGHT_MOTOR_FACTOR = 0.85  # Increased from 0.85 - Reduce right motor power by 10%
+        self.RIGHT_MOTOR_FACTOR = 0.9  # Increased from 0.85 - Reduce right motor power by 10%
     
-    def move(self, speed=0.5, turn=0, t=0):
-        # Apply base speed scaling - increased for faster operation
+    def move(self, speed=0.8, turn=0, t=0):
+        # Apply base speed scaling
         base_speed = 1.0  # Full range is -1.0 to 1.0 for Adafruit
         speed *= base_speed
         
@@ -52,9 +52,9 @@ class Motor:
         
         # Improve pivot turning for sharp turns
         if abs(speed) < 0.1:
-            # For pure turning, use higher power values
-            leftSpeed = turn * 0.9  # Increased from 0.7
-            rightSpeed = -turn * 0.9  # Increased from 0.7
+            # For pure turning, use higher power values that meet the minimum threshold
+            leftSpeed = turn * self.MIN_THROTTLE * 1.2  # Ensure at least MIN_THROTTLE
+            rightSpeed = -turn * self.MIN_THROTTLE * 1.2  # Ensure at least MIN_THROTTLE
             
             # Don't apply minimum throttle for pivot turning
             # This allows more precise control
@@ -88,21 +88,21 @@ class Motor:
 if __name__ == '__main__':
     motor = Motor(simulation=True)
     print("Testing forward movement")
-    motor.move(0.8, 0, 2)  # Forward with increased speed
+    motor.move(0.9, 0, 2)  # Forward with high speed (exceeds 0.75 minimum)
     motor.stop(1)
     
     print("Testing backward movement")
-    motor.move(-0.8, 0, 2)  # Backward with increased speed
+    motor.move(-0.9, 0, 2)  # Backward with high speed
     motor.stop(1)
     
     print("Testing right turn")
-    motor.move(0, 0.8, 2)  # Sharper right turn
+    motor.move(0, 0.9, 2)  # Sharper right turn with high power
     motor.stop(1)
     
     print("Testing left turn")
-    motor.move(0, -0.8, 2)  # Sharper left turn
+    motor.move(0, -0.9, 2)  # Sharper left turn with high power
     motor.stop(1)
     
     print("Testing forward with right curve")
-    motor.move(0.8, 0.5, 2)  # Forward with sharper right curve
+    motor.move(0.9, 0.5, 2)  # Forward with sharper right curve at high speed
     motor.stop(1)
