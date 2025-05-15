@@ -22,7 +22,7 @@ class Motor:
         self.MIN_THROTTLE = 0.7  # Reduced from 0.7 - This is 60% of max power
         
         # Right motor compensation factor to correct the drift
-        self.RIGHT_MOTOR_FACTOR = 0.6  # Increased from 0.85 - Reduce right motor power by 10%
+        self.RIGHT_MOTOR_FACTOR = 0.85  # Increased from 0.85 - Reduce right motor power by 10%
     
     def move(self, speed=0.5, turn=0, t=0):
         # Apply base speed scaling - increased for faster operation
