@@ -8,9 +8,9 @@ HEADLESS = True
 def thresholding(img):
     """Convert image to binary threshold to isolate lane markings"""
     imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # Gray-white range for detecting light-colored lanes
-    lowerGray = np.array([0, 0, 130])     # Hue, Saturation, Value
-    upperGray = np.array([180, 60, 255])  # Covers gray to white-ish
+    # Adjusted gray-white range for better detection of light-colored lanes
+    lowerGray = np.array([0, 0, 120])     # Lowered Value threshold from 130 to 120
+    upperGray = np.array([180, 70, 255])  # Increased Saturation threshold from 60 to 70
     maskWhite = cv2.inRange(imgHsv, lowerGray, upperGray)
     return maskWhite
 
@@ -75,7 +75,10 @@ def getHistogram(img, minPer=0.1, display=False, region=1):
     if maxValue == 0:  # Handle case where image is all black
         basePoint = img.shape[1] // 2  # Default to middle
     else:
-        minValue = minPer * maxValue
+        # Reduced minPer for better detection of faint lanes
+        # This will help detect 90 degree turns more effectively
+        adjustedMinPer = minPer * 0.9  
+        minValue = adjustedMinPer * maxValue
         indexArray = np.where(histValues >= minValue)
         # Make sure indexArray is not empty
         if len(indexArray[0]) > 0:
