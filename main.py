@@ -28,10 +28,10 @@ def main():
     # Get curve value from lane detection (disable all displays)
     curveVal = getLaneCurve(img, display=0)
     
-    # Configure driving parameters - adjust these for your specific robot
-    sensitivity = 1.0  # How strongly to react to curves
-    maxTurn = 0.2      # Maximum turning value
-    baseSpeed = 0.15   # Forward speed
+    # Configure driving parameters - INCREASED for faster speed and sharper turns
+    sensitivity = 1.5     # Increased from 1.0 - How strongly to react to curves
+    maxTurn = 0.5         # Increased from 0.2 - Maximum turning value
+    baseSpeed = 0.35      # Increased from 0.15 - Forward speed
     
     # Clamp curve value to prevent too sharp turns
     curveVal = max(min(curveVal, maxTurn), -maxTurn)
@@ -39,8 +39,12 @@ def main():
     # Fine-tuning around the center to reduce jitter
     if abs(curveVal) < 0.05:
         curveVal = 0  # Ignore very small curves (noise)
+    elif abs(curveVal) > 0.2:
+        # For sharp curves, increase turning response and reduce speed
+        sensitivity = 1.8
+        baseSpeed = 0.25  # Slow down in sharp curves for stability
     elif curveVal > 0:
-        sensitivity = 1.3  # Slightly higher sensitivity for right turns
+        sensitivity = 1.5  # Slightly higher sensitivity for right turns
     
     # Print debug info (can be disabled in production)
     print(f"Curve: {curveVal:.4f}, Speed: {baseSpeed:.2f}, Turn: {-curveVal * sensitivity:.4f}")
@@ -54,7 +58,7 @@ if __name__ == '__main__':
     
     # Short motor test to verify connectivity
     print("Testing motors...")
-    motor.move(0.15, 0, 1)  # Move forward briefly
+    motor.move(0.25, 0, 1)  # Move forward briefly (increased speed)
     motor.stop(0.5)
     print("Motor test complete")
     
