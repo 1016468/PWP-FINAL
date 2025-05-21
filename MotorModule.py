@@ -19,10 +19,11 @@ class Motor:
         self.mySpeed = 0
         
         # Define minimum throttle value needed for motors to actually move
-        self.MIN_THROTTLE = 0.7  # Increased to 0.75 - Motors need at least 75% power to move
+        self.MIN_THROTTLE = 0.7  # Motors need at least 70% power to move
         
-        # Right motor compensation factor to correct the drift
-        self.RIGHT_MOTOR_FACTOR = 0.8  # Increased from 0.85 - Reduce right motor power by 10%
+        # Left motor is much stronger than right motor - apply compensation
+        self.LEFT_MOTOR_FACTOR = 0.65  # Reduce left motor power by 35%
+        self.RIGHT_MOTOR_FACTOR = 1.0  # Keep right motor at full power
     
     def move(self, speed=0.8, turn=0, t=0):
         # Apply base speed scaling
@@ -30,20 +31,21 @@ class Motor:
         speed *= base_speed
         
         # Increased turn factor for sharper turns
-        turn *= 0.71  # Increased from 0.7
+        turn *= 0.71  # Keeps original turn sensitivity
         
         # Calculate left and right motor speeds
         leftSpeed = speed - turn
         rightSpeed = speed + turn
         
-        # Apply right motor compensation to correct drift
+        # Apply motor compensation - left motor is stronger so we reduce its power
+        leftSpeed *= self.LEFT_MOTOR_FACTOR
         rightSpeed *= self.RIGHT_MOTOR_FACTOR
         
         # Apply minimum throttle while preserving direction
         if leftSpeed > 0 and leftSpeed < self.MIN_THROTTLE:
-            leftSpeed = self.MIN_THROTTLE
+            leftSpeed = self.MIN_THROTTLE * self.LEFT_MOTOR_FACTOR  # Apply factor to minimum too
         elif leftSpeed < 0 and leftSpeed > -self.MIN_THROTTLE:
-            leftSpeed = -self.MIN_THROTTLE
+            leftSpeed = -self.MIN_THROTTLE * self.LEFT_MOTOR_FACTOR  # Apply factor to minimum too
             
         if rightSpeed > 0 and rightSpeed < self.MIN_THROTTLE:
             rightSpeed = self.MIN_THROTTLE
@@ -52,17 +54,17 @@ class Motor:
         
         # Improve pivot turning for sharp turns
         if abs(speed) < 0.1:
-            # For pure turning, use higher power values that meet the minimum threshold
-            leftSpeed = turn * self.MIN_THROTTLE * 1.2  # Ensure at least MIN_THROTTLE
-            rightSpeed = -turn * self.MIN_THROTTLE * 1.2  # Ensure at least MIN_THROTTLE
-            
-            # Don't apply minimum throttle for pivot turning
-            # This allows more precise control
-            
-            # Still apply the compensation factor for turning
-            rightSpeed *= self.RIGHT_MOTOR_FACTOR
+            # For pure turning, balance motors for straighter turning
+            # Reduce left motor power even during turns
+            if turn > 0:  # Turning right - left motor forward, right motor backward
+                leftSpeed = turn * self.MIN_THROTTLE * 1.2 * self.LEFT_MOTOR_FACTOR
+                rightSpeed = -turn * self.MIN_THROTTLE * 1.2
+            else:  # Turning left - left motor backward, right motor forward
+                # For left turns, we need to apply more power to right and less to left
+                leftSpeed = turn * self.MIN_THROTTLE * 1.2 * self.LEFT_MOTOR_FACTOR
+                rightSpeed = -turn * self.MIN_THROTTLE * 1.2
         
-        # Increased max speed from 0.8 to 1.0 (full power)
+        # Apply speed limits
         leftSpeed = max(min(leftSpeed, 1.0), -1.0)
         rightSpeed = max(min(rightSpeed, 1.0), -1.0)
         
