@@ -19,10 +19,11 @@ utils.initializeTrackbars([102, 80, 20, 214])
 # New: State variables for correction mode
 correction_mode = False
 correction_attempts = 0
-MAX_CORRECTION_ATTEMPTS = 5
+MAX_CORRECTION_ATTEMPTS = 8  # Increased from 5 to allow more correction time
+last_turn_direction = 0  # Track direction of last turn
 
 def main():
-    global correction_mode, correction_attempts
+    global correction_mode, correction_attempts, last_turn_direction
     
     # Get image from webcam
     img = WebcamModule.getImg(display=False)
@@ -49,6 +50,7 @@ def main():
         print(f"Entering correction mode! Curve detected: {curveVal:.4f}")
         correction_mode = True
         correction_attempts = 0
+        last_turn_direction = -1 if curveVal > 0 else 1  # Store initial direction
         # Stop the robot first
         motor.stop(0.5)
     
@@ -58,7 +60,7 @@ def main():
         
         # Determine turn direction and strength based on curve value
         # Higher curve value means sharper turn
-        turn_strength = 0.8 if abs(curveVal) > 0.3 else 0.6
+        turn_strength = 0.85 if abs(curveVal) > 0.3 else 0.7
         
         if abs(curveVal) < 0.05:
             # We've successfully centered - exit correction mode
@@ -68,15 +70,23 @@ def main():
             return True
         
         # Apply correction turn (no forward movement - pure turning)
-        # Negative turn for positive curve (turn left if drifting right)
-        turn_direction = -1 if curveVal > 0 else 1
+        # Use the stored last_turn_direction if we're still correcting in the same direction
+        # Only change direction if curve has clearly reversed
+        if (curveVal > 0.1 and last_turn_direction > 0) or (curveVal < -0.1 and last_turn_direction < 0):
+            # Direction needs to be reversed
+            turn_direction = -1 if curveVal > 0 else 1
+            last_turn_direction = turn_direction
+        else:
+            # Keep using the same direction for small adjustments
+            turn_direction = last_turn_direction
+            
         turn_value = turn_direction * turn_strength
         
-        print(f"Correction attempt {correction_attempts}: Turning {turn_value:.2f}")
+        print(f"Correction attempt {correction_attempts}: Turning {turn_value:.2f}, Curve: {curveVal:.4f}")
         
         # Execute a short turning movement
-        motor.move(0, turn_value, 0.1)
-        motor.stop(0.1)  # Brief pause between corrections
+        motor.move(0, turn_value, 0.12)  # Slightly longer turning time
+        motor.stop(0.15)  # Longer pause between corrections
         
         # If we've tried too many times, exit correction mode anyway
         if correction_attempts >= MAX_CORRECTION_ATTEMPTS:
