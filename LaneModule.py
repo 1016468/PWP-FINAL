@@ -5,7 +5,7 @@ import utils
 
 def getLaneCurve(img, display=2):
     curveList = []
-    avgVal = 8  # Reduced from 10 for faster response to turns
+    avgVal = 6  # Reduced from 8 for even faster response to turns
     imgCopy = img.copy()
     imgResult = img.copy()
     #### STEP 1
@@ -60,8 +60,8 @@ def getLaneCurve(img, display=2):
             cv2.imshow('Result', imgResult)
 
     #### NORMALIZATION
-    # Amplify the curve value to detect sharper turns
-    amplification = 1.3  # Amplify curve value by 30%
+    # Further amplify the curve value to detect turns more aggressively
+    amplification = 1.5  # Amplify curve value by 50% (increased from 1.3)
     curve = (curve / 100) * amplification
     
     # Keep within normal bounds
